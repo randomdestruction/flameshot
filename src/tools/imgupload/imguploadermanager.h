@@ -23,6 +23,7 @@ public:
     ImgUploaderBase* uploader(const QString& imgUploaderPlugin);
 
     const QString& url();
+    QString url(const QString& imgUploaderPlugin);
     const QString& uploaderPlugin();
 
 private:

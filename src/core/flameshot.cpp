@@ -71,7 +71,7 @@ void raiseAboveMenuBar(QWidget* widget)
 #include "widgets/capturelauncher.h"
 #include "widgets/infowindow.h"
 
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
 #include "tools/imgupload/imguploadermanager.h"
 #include "tools/imgupload/storages/imguploaderbase.h"
 #include "widgets/imguploaddialog.h"
@@ -99,7 +99,7 @@ Flameshot::Flameshot()
 #if (defined(Q_OS_MACOS) || defined(Q_OS_WIN))
   , m_HotkeyScreenshotCapture(nullptr)
 #endif
-#if (defined(Q_OS_MACOS) && ENABLE_IMGUR)
+#if defined(Q_OS_MACOS) && (defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO))
   , m_HotkeyScreenshotHistory(nullptr)
 #endif
 {
@@ -121,7 +121,7 @@ Flameshot::Flameshot()
                      qApp,
                      [this]() { gui(); });
 #endif
-#if (defined(Q_OS_MACOS) && ENABLE_IMGUR)
+#if defined(Q_OS_MACOS) && (defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO))
     m_HotkeyScreenshotHistory = new QHotkey(
       QKeySequence(ConfigHandler().shortcut("SCREENSHOT_HISTORY")), true, this);
     QObject::connect(m_HotkeyScreenshotHistory,
@@ -322,7 +322,7 @@ void Flameshot::info()
     }
 }
 
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
 void Flameshot::history()
 {
     static UploadHistory* historyWidget = nullptr;
@@ -516,7 +516,7 @@ void Flameshot::exportCapture(const QPixmap& capture,
         }
     }
 
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
     if (tasks & CR::UPLOAD) {
         if (!ConfigHandler().uploadWithoutConfirmation()) {
             auto* dialog = new ImgUploadDialog();
@@ -529,7 +529,6 @@ void Flameshot::exportCapture(const QPixmap& capture,
         widget->show();
         widget->activateWindow();
         // NOTE: lambda can't capture 'this' because it might be destroyed later
-        CR::ExportTask tasks = tasks;
         QObject::connect(
           widget, &ImgUploaderBase::uploadOk, [=, this](const QUrl& url) {
               if (ConfigHandler().copyURLAfterUpload()) {

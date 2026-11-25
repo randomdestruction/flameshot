@@ -1,0 +1,141 @@
+name: ImgTaco release
+
+# Builds every package with the ImgTaco uploader: the AppImage from
+# packaging/appimage/imgtaco.sh and everything else from upstream's packaging
+# workflows. Run it by hand on the release branch. With a release tag given
+# (e.g. v15.0.0-imgtaco.1) the packages are also published as a GitHub
+# release, which creates that tag; without one they are only kept as build
+# artifacts.
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag to publish as a release, e.g. v15.0.0-imgtaco.1 (empty: build only)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag }}
+
+jobs:
+  check:
+    name: Check release tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ -n "$RELEASE_TAG" ] || exit 0
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+(\.[0-9]+)*-imgtaco\.[0-9]+$ ]]; then
+            echo "::error::'$RELEASE_TAG' does not look like v15.0.0-imgtaco.1"
+            exit 1
+          fi
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "::error::Release $RELEASE_TAG already exists"
+            exit 1
+          fi
+          # the peeled line of an annotated tag sorts last and names the commit
+          tagged=$(git ls-remote "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            "refs/tags/$RELEASE_TAG" "refs/tags/$RELEASE_TAG^{}" | sort -k2 | tail -n 1 | cut -f1)
+          if [ -n "$tagged" ] && [ "$tagged" != "$GITHUB_SHA" ]; then
+            echo "::error::Tag $RELEASE_TAG already exists on another commit ($tagged)"
+            exit 1
+          fi
+
+  appimage:
+    name: Build AppImage
+    needs: check
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/flameshot-org/ci-building:ubuntu-noble
+      options: --cap-add SYS_ADMIN --device /dev/fuse --security-opt apparmor:unconfined
+    steps:
+      - name: Configure git safe directory
+        shell: bash
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Checkout Source code
+        uses: actions/checkout@v6
+
+      - name: Build AppImage
+        shell: bash
+        run: packaging/appimage/imgtaco.sh ${RELEASE_TAG:+"${RELEASE_TAG#v}"}
+
+      - name: Artifact Upload
+        uses: actions/upload-artifact@v7
+        with:
+          name: flameshot-imgtaco-appimage
+          path: Flameshot-*.AppImage
+          overwrite: true
+
+  linux:
+    needs: check
+    uses: ./.github/workflows/Linux-pack.yml
+
+  macos:
+    needs: check
+    uses: ./.github/workflows/MacOS-pack.yml
+
+  windows:
+    needs: check
+    uses: ./.github/workflows/Windows-pack.yml
+
+  release:
+    name: Publish release
+    if: inputs.release_tag != ''
+    needs: [appimage, linux, macos, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Collect packages
+        run: |
+          version=${RELEASE_TAG#v}
+          upstream=${version%%-imgtaco*}
+          mkdir release
+          for dir in artifacts/*/; do
+            artifact=$(basename "$dir")
+            # upstream's AppImage job does not bundle libssl, ours replaces it
+            case "$artifact" in *-artifact-appimage-*) continue ;; esac
+            find "$dir" -type f \( -name '*.AppImage' -o -name '*.deb' \
+              -o -name '*.rpm' -o -name '*.flatpak' -o -name '*.snap' \
+              -o -name '*.dmg' -o -name '*.msi' -o -name '*.zip' \) -print0 |
+              while IFS= read -r -d '' file; do
+                name=$(basename "$file")
+                case "$name" in
+                  *"$version"*) ;;
+                  *) name=${name/$upstream/$version} ;;
+                esac
+                # both macOS builds are called Flameshot-<version>.dmg
+                case "$artifact" in
+                  *-macos-*) name=${name%.dmg}-macos-${artifact##*-macos-}.dmg ;;
+                esac
+                if [ -e "release/$name" ]; then
+                  echo "::error::Two packages would be published as $name"
+                  exit 1
+                fi
+                cp "$file" "release/$name"
+              done
+          done
+          cd release
+          sha256sum -- * | tee SHA256SUMS
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${RELEASE_TAG#v}
+          gh release create "$RELEASE_TAG" release/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Flameshot $version" \
+            --notes "Flameshot ${version%%-imgtaco*} with the ImgTaco uploader."
