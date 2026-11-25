@@ -71,7 +71,8 @@ void UploadHistory::addLine(const QString& path, const QString& fileName)
     History history;
     HistoryFileName unpackFileName = history.unpackFileName(fileName);
 
-    QString url = ImgUploaderManager(this).url() + unpackFileName.file;
+    QString url =
+      ImgUploaderManager(this).url(unpackFileName.type) + unpackFileName.file;
 
     // load pixmap
     QPixmap pixmap;

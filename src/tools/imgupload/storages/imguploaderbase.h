@@ -31,6 +31,7 @@ public:
     void setInfoLabelText(const QString&);
 
     NotificationWidget* notification();
+    void setDeleteUnavailable(const QString& reason);
     virtual void deleteImage(const QString& fileName,
                              const QString& deleteToken) = 0;
     virtual void upload() = 0;
@@ -65,7 +66,8 @@ private:
     QPushButton* m_toClipboardButton;
     QPushButton* m_saveToFilesystemButton;
     QUrl m_imageURL;
-    NotificationWidget* m_notification;
+    QString m_deleteUnavailableReason;
+    NotificationWidget* m_notification = nullptr;
 
 public:
     QString m_currentImageName;

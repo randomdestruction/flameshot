@@ -133,6 +133,8 @@ static QMap<class QString, QSharedPointer<ValueHandler>>
     // drawFontSize, remember to update ConfigHandler::toolSize
     OPTION("copyOnDoubleClick"           ,Bool               ( false         )),
     OPTION("uploadClientSecret"          ,String             ( "313baf0c7b4d3ff" )),
+    OPTION("imgTacoApiToken"             ,String             ( ""            )),
+    OPTION("uploadService"               ,String             ( "imgur"       )),
     OPTION("showSelectionGeometry"       , BoundedInt        ( 0, 5, 4       )),
     OPTION("showSelectionGeometryHideTime", LowerBoundedInt  ( 0, 3000       )),
     OPTION("jpegQuality"                 , BoundedInt        ( 0,100,75      )),
@@ -171,7 +173,7 @@ static QMap<QString, QSharedPointer<KeySequence>> recognizedShortcuts = {
     SHORTCUT("TYPE_ACCEPT"              ,   "Return"                ),
     SHORTCUT("TYPE_EXIT"                ,   "Ctrl+Q"                ),
     SHORTCUT("TYPE_CANCEL"              ,   "Ctrl+Backspace"        ),
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
     SHORTCUT("TYPE_IMAGEUPLOADER"       ,                           ),
 #endif
 #if !defined(Q_OS_MACOS)

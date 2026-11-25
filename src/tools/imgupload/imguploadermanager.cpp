@@ -5,47 +5,60 @@
 #include "imguploadermanager.h"
 // TODO - remove this hard-code and create plugin manager in the future, you may
 // include other storage headers here
+#ifdef ENABLE_IMGUR
 #include "tools/imgupload/storages/imgur/imguruploader.h"
+#endif
+#ifdef ENABLE_IMGTACO
+#include "tools/imgupload/storages/imgtaco/imgtacouploader.h"
+#endif
+#include "utils/confighandler.h"
 
 #include <QPixmap>
 #include <QWidget>
+
+namespace {
+constexpr const char* imgurUrl = "https://imgur.com/";
+constexpr const char* imgTacoUrl = "https://imgta.co/i/";
+} // namespace
 
 ImgUploaderManager::ImgUploaderManager(QObject* parent)
   : QObject(parent)
   , m_imgUploaderBase(nullptr)
 {
-    // TODO - implement ImgUploader for other Storages and selection among them
-    m_imgUploaderPlugin = IMG_UPLOADER_STORAGE_DEFAULT;
+    m_imgUploaderPlugin = ConfigHandler().uploadService();
+    if (m_imgUploaderPlugin.isEmpty()) {
+        m_imgUploaderPlugin = IMG_UPLOADER_STORAGE_DEFAULT;
+    }
     init();
 }
 
 void ImgUploaderManager::init()
 {
-    // TODO - implement ImgUploader for other Storages and selection among them,
-    // example:
-    // if (uploaderPlugin().compare("s3") == 0) {
-    //    m_qstrUrl = ImgS3Settings().value("S3", "S3_URL").toString();
-    //} else {
-    //    m_qstrUrl = "https://imgur.com/";
-    //    m_imgUploaderPlugin = "imgur";
-    //}
-    m_urlString = "https://imgur.com/";
-    m_imgUploaderPlugin = "imgur";
+    if (m_imgUploaderPlugin.compare("imgtaco") == 0) {
+        m_urlString = imgTacoUrl;
+    } else {
+        m_urlString = imgurUrl;
+        m_imgUploaderPlugin = "imgur";
+    }
 }
 
 ImgUploaderBase* ImgUploaderManager::uploader(const QPixmap& capture,
                                               QWidget* parent)
 {
-    // TODO - implement ImgUploader for other Storages and selection among them,
-    // example:
-    // if (uploaderPlugin().compare("s3") == 0) {
-    //    m_imgUploaderBase =
-    //      (ImgUploaderBase*)(new ImgS3Uploader(capture, parent));
-    //} else {
-    //    m_imgUploaderBase =
-    //      (ImgUploaderBase*)(new ImgurUploader(capture, parent));
-    //}
+#if defined(ENABLE_IMGUR) && defined(ENABLE_IMGTACO)
+    if (m_imgUploaderPlugin.compare("imgtaco") == 0) {
+        m_imgUploaderBase =
+          (ImgUploaderBase*)(new ImgTacoUploader(capture, parent));
+    } else {
+        m_imgUploaderBase =
+          (ImgUploaderBase*)(new ImgurUploader(capture, parent));
+    }
+#elif defined(ENABLE_IMGTACO)
+    m_imgUploaderBase =
+      (ImgUploaderBase*)(new ImgTacoUploader(capture, parent));
+#else
     m_imgUploaderBase = (ImgUploaderBase*)(new ImgurUploader(capture, parent));
+#endif
     if (m_imgUploaderBase && !capture.isNull()) {
         m_imgUploaderBase->upload();
     }
@@ -66,5 +79,16 @@ const QString& ImgUploaderManager::uploaderPlugin()
 
 const QString& ImgUploaderManager::url()
 {
+    return m_urlString;
+}
+
+QString ImgUploaderManager::url(const QString& imgUploaderPlugin)
+{
+    if (imgUploaderPlugin.compare("imgtaco") == 0) {
+        return imgTacoUrl;
+    }
+    if (imgUploaderPlugin.compare("imgur") == 0) {
+        return imgurUrl;
+    }
     return m_urlString;
 }

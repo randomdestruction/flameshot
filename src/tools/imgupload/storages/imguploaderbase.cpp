@@ -107,6 +107,11 @@ void ImgUploaderBase::startDrag()
     dragHandler->exec();
 }
 
+void ImgUploaderBase::setDeleteUnavailable(const QString& reason)
+{
+    m_deleteUnavailableReason = reason;
+}
+
 void ImgUploaderBase::showPostUploadDialog()
 {
     m_infoLabel->deleteLater();
@@ -129,6 +134,10 @@ void ImgUploaderBase::showPostUploadDialog()
     m_copyUrlButton = new QPushButton(tr("Copy URL"));
     m_openUrlButton = new QPushButton(tr("Open URL"));
     m_openDeleteUrlButton = new QPushButton(tr("Delete image"));
+    if (!m_deleteUnavailableReason.isEmpty()) {
+        m_openDeleteUrlButton->setEnabled(false);
+        m_openDeleteUrlButton->setToolTip(m_deleteUnavailableReason);
+    }
     m_toClipboardButton = new QPushButton(tr("Image to Clipboard."));
     m_saveToFilesystemButton = new QPushButton(tr("Save image"));
     m_hLayout->addWidget(m_copyUrlButton);

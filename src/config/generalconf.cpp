@@ -63,12 +63,17 @@ GeneralConf::GeneralConf(QWidget* parent)
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
     initUseX11LegacyScreenshot();
 #endif
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
     initCopyAndCloseAfterUpload();
     initUploadWithoutConfirmation();
     initHistoryConfirmationToDelete();
     initUploadHistoryMax();
+#endif
+#ifdef ENABLE_IMGUR
     initUploadClientSecret();
+#endif
+#ifdef ENABLE_IMGTACO
+    initImgTacoApiToken();
 #endif
     initPredefinedColorPaletteLarge();
     initShowSelectionGeometry();
@@ -98,13 +103,16 @@ void GeneralConf::_updateComponents(bool allowEmptySavePath)
     m_antialiasingPinZoom->setChecked(config.antialiasingPinZoom());
     m_useJpgForClipboard->setChecked(config.useJpgForClipboard());
     m_copyOnDoubleClick->setChecked(config.copyOnDoubleClick());
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
     m_uploadWithoutConfirmation->setChecked(config.uploadWithoutConfirmation());
     m_copyURLAfterUpload->setChecked(config.copyURLAfterUpload());
     m_historyConfirmationToDelete->setChecked(
       config.historyConfirmationToDelete());
 
     m_uploadHistoryMax->setValue(config.uploadHistoryMax());
+#endif
+#ifdef ENABLE_IMGTACO
+    m_imgTacoApiToken->setText(config.imgTacoApiToken());
 #endif
 #if !defined(DISABLE_UPDATE_CHECKER)
     m_checkForUpdates->setChecked(config.checkForUpdates());
@@ -627,6 +635,33 @@ void GeneralConf::initUploadClientSecret()
 void GeneralConf::uploadClientKeyEdited()
 {
     ConfigHandler().setUploadClientSecret(m_uploadClientKey->text());
+}
+
+void GeneralConf::initImgTacoApiToken()
+{
+    auto* box = new QGroupBox(tr("ImgTaco API token"));
+    box->setFlat(true);
+    m_layout->addWidget(box);
+
+    auto* vboxLayout = new QVBoxLayout();
+    box->setLayout(vboxLayout);
+
+    m_imgTacoApiToken = new QLineEdit(this);
+    QString foreground = this->palette().windowText().color().name();
+    m_imgTacoApiToken->setStyleSheet(
+      QStringLiteral("color: %1").arg(foreground));
+    m_imgTacoApiToken->setEchoMode(QLineEdit::PasswordEchoOnEdit);
+    m_imgTacoApiToken->setText(ConfigHandler().imgTacoApiToken());
+    connect(m_imgTacoApiToken,
+            &QLineEdit::editingFinished,
+            this,
+            &GeneralConf::imgTacoApiTokenEdited);
+    vboxLayout->addWidget(m_imgTacoApiToken);
+}
+
+void GeneralConf::imgTacoApiTokenEdited()
+{
+    ConfigHandler().setImgTacoApiToken(m_imgTacoApiToken->text().trimmed());
 }
 
 void GeneralConf::uploadHistoryMaxChanged(int max)

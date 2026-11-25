@@ -176,7 +176,7 @@ void TrayIcon::initMenu()
     QAction* quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
 
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
     // recent screenshots
     QAction* recentAction = new QAction(tr("&Latest Uploads"), this);
     connect(recentAction,
@@ -193,7 +193,7 @@ void TrayIcon::initMenu()
     m_menu->addAction(m_captureAction);
     m_menu->addAction(m_launcherAction);
     m_menu->addSeparator();
-#ifdef ENABLE_IMGUR
+#if defined(ENABLE_IMGUR) || defined(ENABLE_IMGTACO)
     m_menu->addAction(recentAction);
 #endif
     m_menu->addAction(openSavePathAction);

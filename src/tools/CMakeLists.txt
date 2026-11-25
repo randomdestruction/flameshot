@@ -7,17 +7,31 @@ target_sources(flameshot PRIVATE exit/exittool.h exit/exittool.cpp)
 target_sources(flameshot PRIVATE sizeincrease/sizeincreasetool.h sizeincrease/sizeincreasetool.cpp)
 target_sources(flameshot PRIVATE sizedecrease/sizedecreasetool.h sizedecrease/sizedecreasetool.cpp)
 
-if (ENABLE_IMGUR)
+if (ENABLE_IMGUR OR ENABLE_IMGTACO)
 target_sources(
   flameshot
-        PRIVATE imgupload/storages/imgur/imguruploader.h
-        imgupload/storages/imgur/imguruploader.cpp
-        imgupload/storages/imguploaderbase.h
+        PRIVATE imgupload/storages/imguploaderbase.h
         imgupload/storages/imguploaderbase.cpp
         imgupload/imguploadertool.h
         imgupload/imguploadertool.cpp
         imgupload/imguploadermanager.h
         imgupload/imguploadermanager.cpp
+)
+endif()
+
+if (ENABLE_IMGUR)
+target_sources(
+  flameshot
+        PRIVATE imgupload/storages/imgur/imguruploader.h
+        imgupload/storages/imgur/imguruploader.cpp
+)
+endif()
+
+if (ENABLE_IMGTACO)
+target_sources(
+  flameshot
+        PRIVATE imgupload/storages/imgtaco/imgtacouploader.h
+        imgupload/storages/imgtaco/imgtacouploader.cpp
 )
 endif()
 target_sources(

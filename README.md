@@ -1,3 +1,7 @@
+> [!NOTE]
+> **This is a fork** of [flameshot-org/flameshot](https://github.com/flameshot-org/flameshot) that adds an uploader for ImgTaco.
+> Enter your ImgTaco API token in the General settings tab to use it. Everything below is upstream's README.
+
 <div align="center">
   <p>
     <h1>

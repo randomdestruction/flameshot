@@ -54,6 +54,7 @@ private slots:
     void resetConfiguration();
     void togglePathFixed();
     void uploadClientKeyEdited();
+    void imgTacoApiTokenEdited();
     void useJpgForClipboardChanged(bool checked);
     void setSaveAsFileExtension(const QString& extension);
     void setGeometryLocation(int index);
@@ -103,6 +104,7 @@ private:
     void initUseJpgForClipboard();
     void initUploadHistoryMax();
     void initUploadClientSecret();
+    void initImgTacoApiToken();
     void initSaveLastRegion();
     void initShowSelectionGeometry();
     void initJpegQuality();
@@ -149,6 +151,7 @@ private:
     QCheckBox* m_saveAfterCopy;
     QLineEdit* m_savePath;
     QLineEdit* m_uploadClientKey;
+    QLineEdit* m_imgTacoApiToken;
     QPushButton* m_changeSaveButton;
     QCheckBox* m_screenshotPathFixedCheck;
     QCheckBox* m_historyConfirmationToDelete;

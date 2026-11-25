@@ -83,6 +83,13 @@ const HistoryFileName& History::unpackFileName(const QString& fileNamePacked)
         unpackedFileName = fileNamePacked.mid(nPathIndex + 1).split("-");
     }
 
+    // the file part may itself contain dashes
+    if (unpackedFileName.length() > 3) {
+        const QString file = unpackedFileName.mid(2).join("-");
+        unpackedFileName = unpackedFileName.mid(0, 2);
+        unpackedFileName.append(file);
+    }
+
     switch (unpackedFileName.length()) {
         case 3:
             m_unpackedFileName.file = unpackedFileName[2];
